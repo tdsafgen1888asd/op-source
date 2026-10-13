@@ -1,0 +1,14 @@
+{
+  "kernel": "6.18.56",
+  "kernel_sha256": "4633bbda2ab95eaf2a7af4041236451d6759c72e6946265531af4b3aacefbf89",
+  "targets": {
+    "mediatek": {
+      "patches": 592,
+      "result": "passed"
+    },
+    "ramips": {
+      "patches": 498,
+      "result": "passed"
+    }
+  }
+}
