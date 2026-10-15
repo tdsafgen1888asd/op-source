@@ -1,7 +1,8 @@
 {
   "name": "op-source",
   "repository": "tdsafgen1888asd/op-source",
-  "kernel": "6.18.56",
+  "kernel": "6.18.57",
+  "kernel_sha256": "5bd9acdc82ec5efc3790ae840e5aaa40dfde7efff261cf6dde902dc570acf98c",
   "source": {
     "url": "https://github.com/openwrt/openwrt",
     "branch": "main",
@@ -62,7 +63,7 @@
       "compatible": "cudy,tr1200-v1"
     }
   },
-  "visibility": "private",
+  "visibility": "public",
   "distribution": "OpenWrt",
   "derived_from": {
     "url": "https://github.com/tdsafgen1888asd/Device-Build",

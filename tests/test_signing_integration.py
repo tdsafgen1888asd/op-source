@@ -75,12 +75,17 @@ class SigningIntegrationTests(unittest.TestCase):
         (self.work / 'staging_dir/host').mkdir(parents=True)
         (self.work / 'staging_dir/host/bin').symlink_to(self.tools, target_is_directory=True)
         command = ['bash', str(ROOT / 'scripts/verify-release.sh'), 'images']
-        verified = subprocess.run(command, cwd=self.work, env=self.env, capture_output=True)
+        # Build commands add the host tools to PATH; the standalone upload
+        # verifier must also work when that build-only environment is absent.
+        verify_env = dict(self.env)
+        verify_env['PATH'] = os.pathsep.join(
+            part for part in self.env['PATH'].split(os.pathsep) if part != str(self.tools))
+        verified = subprocess.run(command, cwd=self.work, env=verify_env, capture_output=True)
         self.assertEqual(verified.returncode, 0, verified.stderr.decode(errors='replace'))
         self.assertIn(b'Verified 2 signed', verified.stdout)
         with (self.work / targets[1]).open('r+b') as stream:
             stream.write(b'TAMPERED')
-        tampered = subprocess.run(command, cwd=self.work, env=self.env, capture_output=True)
+        tampered = subprocess.run(command, cwd=self.work, env=verify_env, capture_output=True)
         self.assertNotEqual(tampered.returncode, 0)
 
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Select and verify a op-source profile before compiling firmware."""
+"""Select and verify an op-source profile before compiling firmware."""
 import argparse
 import hashlib
 import json
@@ -56,12 +56,18 @@ def check_config(name, path):
 
 def check_source():
     data = manifest()
-    details = (ROOT / 'target/linux/generic/kernel-6.18').read_text()
-    if not re.search(r'^LINUX_VERSION-6\.18\s*=\s*\.56$', details, re.M):
+    match = re.fullmatch(r'(6\.18)\.(\d+)', data['kernel'])
+    if not match:
+        raise ValueError('Unsupported kernel series: ' + data['kernel'])
+    series, patchlevel = match.groups()
+    checksum = data['kernel_sha256']
+    if not re.fullmatch(r'[0-9a-f]{64}', checksum):
+        raise ValueError('Invalid kernel source SHA256 in device manifest')
+    details = (ROOT / ('target/linux/generic/kernel-' + series)).read_text()
+    if not re.search(r'^LINUX_VERSION-' + re.escape(series) + r'\s*=\s*\.' + patchlevel + '$', details, re.M):
         raise ValueError('op-source requires Linux ' + data['kernel'])
-    checksum = '4633bbda2ab95eaf2a7af4041236451d6759c72e6946265531af4b3aacefbf89'
-    if not re.search(r'^LINUX_KERNEL_HASH-6\.18\.56\s*=\s*' + checksum + '$', details, re.M):
-        raise ValueError('Linux 6.18.56 source checksum does not match kernel.org')
+    if not re.search(r'^LINUX_KERNEL_HASH-' + re.escape(data['kernel']) + r'\s*=\s*' + checksum + '$', details, re.M):
+        raise ValueError('Linux source checksum does not match the device manifest')
     for name, entry in data['devices'].items():
         target = ROOT / 'target/linux' / entry['target']
         if 'KERNEL_PATCHVER:=6.18' not in (target / 'Makefile').read_text():

@@ -246,7 +246,9 @@ case "$2" in
   *) exit 1 ;;
 esac
 ''',
-                'ucert': '#!/bin/sh\ngrep -q "^signed$"\n',
+                # ucert launches usign through PATH even when ucert itself is
+                # invoked by absolute path. The verifier must provide that PATH.
+                'ucert': '#!/bin/sh\nusign -F >/dev/null || exit 1\ngrep -q "^signed$"\n',
             }
             for name, source in scripts.items():
                 (tools / name).write_text(source)

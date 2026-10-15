@@ -2,6 +2,10 @@
 # Verify every sysupgrade image before making it a release artifact.
 set -euo pipefail
 target_dir=${1:?Supply the target output directory}
+# ucert invokes usign by name. The standalone packaging step does not inherit
+# the host-tool PATH that make sets for image recipes.
+host_tools=$(cd staging_dir/host/bin && pwd)
+export PATH="$host_tools:$PATH"
 verify_dir=$(mktemp -d "${RUNNER_TEMP:-/tmp}/op-source-verify.XXXXXX")
 trap 'rm -rf "$verify_dir"' EXIT HUP INT TERM
 mkdir "$verify_dir/keys"
