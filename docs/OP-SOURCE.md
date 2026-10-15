@@ -91,6 +91,16 @@ updates are recorded in Git history.
 - Passed 41 regression tests covering device selection, image metadata/hashes,
   archive extraction, download/cache handling and signature-verification
   orchestration, including the missing host-tool PATH regression.
+- Built the repository-pinned json-c, libubox, usign, ucert and fwtool sources
+  natively on Apple Silicon, after verifying source checksums and applying the
+  package patches. The temporary build used CMake 3.31.6, pkgconf 2.5.1 and the
+  macOS 15.4 SDK with Apple Clang 21.
+- Passed four real signing-tool integration tests: certificate append and
+  verification, failed certificate writes, truncated signatures, and the real
+  image signing recipes plus standalone release verification. Verification
+  succeeds with the signing tools removed from the inherited PATH and rejects
+  tampered images. The fifth test needs Linux's `/dev/full` and was skipped.
+  Overall, 45 tests passed and one Linux-only test was skipped.
 - Passed `actionlint` 1.7.12 for both active workflows and shell syntax checks
   for the signature verification helper.
 
