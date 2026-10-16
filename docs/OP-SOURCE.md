@@ -126,6 +126,14 @@ make package/kernel/mac80211/compile -j1 V=s
 make -j"$(nproc)"
 ```
 
+## LLVM host-tool build recovery, 2026-10-17
+
+LLVM source builds now use an explicit single-job Ninja limit. Linux x86-64
+owners can instead run `python3 scripts/setup-llvm-bpf.py` to verify and select
+OpenWrt's matching prebuilt BPF tools. The helper preserves device/package
+selection and checks the complete BPF compiler pipeline on the Linux host.
+See `docs/LLVM-BPF.md` for recovery commands, local checks and their limits.
+
 ## Local macOS checks on 2026-10-15
 
 - Passed source checks for Linux 6.18.57 and all six device profiles.

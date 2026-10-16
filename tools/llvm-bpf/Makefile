@@ -22,6 +22,11 @@ CMAKE_SOURCE_SUBDIR := llvm
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/cmake.mk
 
+# LLVM's C++ front end can exhaust RAM when Ninja uses all host CPUs.
+# Set an explicit limit, including when the parent make has a jobserver.
+LLVM_BPF_JOBS ?= 1
+NINJA += -j$(LLVM_BPF_JOBS)
+
 ifneq ($(HOST_OS),Linux)
   HOST_CFLAGS := $(filter-out -I$(STAGING_DIR_HOST)/include,$(HOST_CFLAGS))
   HOST_CXXFLAGS := $(filter-out -I$(STAGING_DIR_HOST)/include,$(HOST_CXXFLAGS))

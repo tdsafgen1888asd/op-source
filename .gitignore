@@ -37,6 +37,7 @@ git-src
 .vscode*
 
 /.config.device-build.backup
+/.config.llvm-bpf.backup
 /artifacts
 /__pycache__
 /tests/__pycache__
