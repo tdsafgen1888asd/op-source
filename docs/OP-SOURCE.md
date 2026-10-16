@@ -85,6 +85,47 @@ Future builds can be started manually through **OpenWrt Device Build**.
 `docs/OPENWRT-CHANGES.patch` records the original 6.18.56 import. Later source
 updates are recorded in Git history.
 
+## mac80211 compatibility fix and preflight, 2026-10-16
+
+Linux 6.18.57 adds `struct sockaddr_unsized`, but backports 7.2 provides its own
+definition for kernels older than 6.19. The duplicate definition stops
+`net/wireless/core.c` from compiling. The mac80211 build patch now stops defining
+the compatibility structure at 6.18.57, and its package release increases to 6.
+The separate `kernel_connect` wrapper retains its 6.19 cutoff: that function
+still takes `struct sockaddr *` in Linux 6.18.57.
+
+Local preflight on Apple Silicon macOS:
+
+- Verified the backports 7.2 archive against the package's SHA256.
+- Reproduced the original duplicate-definition compiler error before patching.
+- Applied all 191 mac80211 patches in build-system order without rejects.
+- Passed eight AArch64 compiler probes for the socket wrapper, covering version
+  cases 6.6.0, 6.12.0, 6.18.0, 6.18.56, 6.18.57, 6.18.58, 6.19.0 and 7.0.0.
+- Passed three AArch64 compiler probes for the `kernel_connect` wrapper using
+  native declarations from Linux 6.18.56, 6.18.57 and 6.19.
+- Passed source checks for Linux 6.18.57 and all six device profiles, 41
+  regression tests and shell syntax validation of the release verifier. Five
+  signing integration tests were skipped because their temporary native tools
+  were unavailable; the previous day's signing results remain recorded below.
+
+The compiler probes use the actual patched backports wrappers, the socket type
+from Linux 6.18.57 and the listed native function declarations, with minimal
+include stubs and simulated version codes. They verify this compatibility fix;
+they do not compile a complete mac80211 module, kernel or firmware image.
+Results are recorded in `docs/validation/mac80211-preflight.json`. No additional
+errors were found within these checks. This fix uses `[skip ci]` to respect the
+owner's request to stop cloud builds.
+
+After updating an existing Linux build tree, clean and rebuild mac80211 before
+resuming the firmware build:
+
+```sh
+git pull --ff-only
+make package/kernel/mac80211/clean
+make package/kernel/mac80211/compile -j1 V=s
+make -j"$(nproc)"
+```
+
 ## Local macOS checks on 2026-10-15
 
 - Passed source checks for Linux 6.18.57 and all six device profiles.
