@@ -10,8 +10,8 @@
 | Customization reference | `tdsafgen1888asd/Device-Build`, branch `main` |
 | Reference commit | `db96277fbc98282751cb1d70b83bc1cd8156eb4d` |
 | Import date | 2026-10-13, Asia/Shanghai |
-| Kernel | Linux 6.18.57 |
-| Kernel archive SHA256 | `5bd9acdc82ec5efc3790ae840e5aaa40dfde7efff261cf6dde902dc570acf98c` |
+| Kernel | Linux 6.18.58 |
+| Kernel archive SHA256 | `069b19f9032c4dac8149ae4b6520c35debca0f42a9f6d52ee55ba6ca9b818013` |
 
 The source is an independent snapshot of the official OpenWrt tree with the
 listed customizations. Upstream history is available at the recorded base
@@ -133,6 +133,36 @@ owners can instead run `python3 scripts/setup-llvm-bpf.py` to verify and select
 OpenWrt's matching prebuilt BPF tools. The helper preserves device/package
 selection and checks the complete BPF compiler pipeline on the Linux host.
 See `docs/LLVM-BPF.md` for recovery commands, local checks and their limits.
+
+## Linux 6.18.58 update and 6.18.55 migration kit, 2026-10-22
+
+The manifest and generic kernel metadata now select Linux 6.18.58. The official
+154,851,680-byte archive was downloaded and its SHA256 matched kernel.org's
+published checksum list. Two OpenWrt patches needed refreshing: bridge ARP
+suppression now compares the stable kernel's neighbour-address snapshot, and
+the FQ-CoDel defaults patch uses the updated MTU/quantum context.
+
+All 592 MediaTek and 498 Ralink kernel patches applied in build-system order
+with zero fuzz and no rejects. All 191 mac80211 patches also applied with zero
+fuzz. An AArch64 compiler probe reproduced the original socket-type conflict
+against Linux 6.18.58's native structure and passed with the compatibility fix.
+The probes use minimal include stubs and do not compile a complete module.
+
+`updates/kernel-6.18.58/` is a standalone migration kit for an existing compatible
+6.18.55 build directory, with support for the known 6.18.56/57 states. It checks
+file hashes, backs up changed files, preserves configuration and toolchains,
+and includes a readable unified source patch. See its README for update and
+rebuild commands. Kernel objects and kernel modules must be rebuilt for 6.18.58.
+
+The local checks cover patch application and migration behavior. Full firmware
+generation and physical-device testing remain unverified. This update uses
+`[skip ci]` to keep cloud builds stopped as requested.
+
+The regression run passed 65 tests, including 12 migration checks. Seven tests
+were skipped because their native Ninja/signing tools were unavailable. The
+packaged kit passed a standalone CLI upgrade from reconstructed 6.18.55 files,
+verified download-cache reuse and a second no-op check. Detailed results and
+the kit checksum are in `docs/validation/kernel-6.18.58-preflight.json`.
 
 ## Local macOS checks on 2026-10-15
 

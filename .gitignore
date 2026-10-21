@@ -38,6 +38,8 @@ git-src
 
 /.config.device-build.backup
 /.config.llvm-bpf.backup
+/.kernel-update-backups
+/updates/**/__pycache__/
 /artifacts
 /__pycache__
 /tests/__pycache__
