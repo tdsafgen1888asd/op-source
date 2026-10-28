@@ -9,7 +9,7 @@ import unittest
 from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
-BUNDLE = ROOT / 'updates/kernel-6.18.58'
+BUNDLE = ROOT / 'updates/kernel-6.18.59'
 spec = importlib.util.spec_from_file_location('kernel_update', BUNDLE / 'update.py')
 updater = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(updater)
@@ -53,8 +53,8 @@ class UpdateTests(unittest.TestCase):
 
     def test_upgrade_55_backs_up_files_and_preserves_configuration_and_caches(self):
         changes = self.plan()
-        self.assertEqual(len(changes), 9)
-        backup = updater.apply(self.root, changes, '6.18.58')
+        self.assertEqual(len(changes), 11)
+        backup = updater.apply(self.root, changes, '6.18.59')
         self.assert_updated()
         journal = json.loads((backup / 'manifest.json').read_text())
         self.assertEqual(len(journal['files']), len(changes))
@@ -74,15 +74,37 @@ class UpdateTests(unittest.TestCase):
                 for entry in self.manifest['files']:
                     if entry['after'] is None:
                         (self.root / entry['path']).unlink(missing_ok=True)
-                updater.apply(self.root, self.plan(), '6.18.58')
+                updater.apply(self.root, self.plan(), '6.18.59')
                 self.assert_updated()
 
     def test_repeated_update_is_a_noop(self):
-        updater.apply(self.root, self.plan(), '6.18.58')
+        updater.apply(self.root, self.plan(), '6.18.59')
         count = len(list((self.root / '.kernel-update-backups').iterdir()))
         self.assertEqual(self.plan(), [])
-        self.assertIsNone(updater.apply(self.root, self.plan(), '6.18.58'))
+        self.assertIsNone(updater.apply(self.root, self.plan(), '6.18.59'))
         self.assertEqual(len(list((self.root / '.kernel-update-backups').iterdir())), count)
+
+    def test_published_58_migration_is_supported(self):
+        previous = ROOT / 'updates/kernel-6.18.58'
+        for entry in json.loads((previous / 'manifest.json').read_text())['files']:
+            path = self.root / entry['path']
+            if entry['after'] is None:
+                path.unlink(missing_ok=True)
+            else:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes((previous / entry['payload']).read_bytes())
+        changes = self.plan()
+        self.assertEqual(len(changes), 4)
+        updater.apply(self.root, changes, '6.18.59')
+        self.assert_updated()
+
+    def test_older_bundle_integrity_is_retained(self):
+        previous = ROOT / 'updates/kernel-6.18.58'
+        manifest = json.loads((previous / 'manifest.json').read_text())
+        self.assertEqual(updater.digest((previous / manifest['patch']).read_bytes()), manifest['patch_sha256'])
+        for entry in manifest['files']:
+            if entry['after'] is not None:
+                self.assertEqual(updater.digest((previous / entry['payload']).read_bytes()), entry['after'])
 
     def test_custom_source_modification_aborts_before_any_changes(self):
         path = self.root / 'package/kernel/mac80211/Makefile'
@@ -99,9 +121,9 @@ class UpdateTests(unittest.TestCase):
         data = {'kernel': '6.18.55', 'kernel_sha256': self.manifest['supported_kernels']['6.18.55'],
                 'devices': {'custom-router': {'target': 'mediatek', 'extra': [1, 2, 3]}}}
         path.write_text(json.dumps(data))
-        updater.apply(self.root, self.plan(), '6.18.58')
+        updater.apply(self.root, self.plan(), '6.18.59')
         updated = json.loads(path.read_text())
-        self.assertEqual(updated['kernel'], '6.18.58')
+        self.assertEqual(updated['kernel'], '6.18.59')
         self.assertEqual(updated['kernel_sha256'], self.manifest['kernel_sha256'])
         self.assertEqual(updated['devices'], data['devices'])
 
@@ -119,7 +141,7 @@ class UpdateTests(unittest.TestCase):
 
         with mock.patch.object(updater, 'atomic_write', side_effect=fail_once):
             with self.assertRaisesRegex(OSError, 'disk write'):
-                updater.apply(self.root, changes, '6.18.58')
+                updater.apply(self.root, changes, '6.18.59')
         self.assertTrue(failed)
         for entry in changes:
             path = self.root / entry['path']
@@ -144,7 +166,7 @@ class UpdateTests(unittest.TestCase):
         self.assertFalse((self.root / '.kernel-update-backups').exists())
 
     def test_corrupt_download_does_not_replace_existing_archive(self):
-        target = self.root / 'dl/linux-6.18.58.tar.xz'
+        target = self.root / 'dl/linux-6.18.59.tar.xz'
         target.write_bytes(b'existing incomplete archive')
         with mock.patch.object(updater.urllib.request, 'urlopen', return_value=io.BytesIO(b'tampered')):
             with self.assertRaisesRegex(ValueError, 'checksum mismatch'):

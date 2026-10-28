@@ -10,8 +10,8 @@
 | Customization reference | `tdsafgen1888asd/Device-Build`, branch `main` |
 | Reference commit | `db96277fbc98282751cb1d70b83bc1cd8156eb4d` |
 | Import date | 2026-10-13, Asia/Shanghai |
-| Kernel | Linux 6.18.58 |
-| Kernel archive SHA256 | `069b19f9032c4dac8149ae4b6520c35debca0f42a9f6d52ee55ba6ca9b818013` |
+| Kernel | Linux 6.18.59 |
+| Kernel archive SHA256 | `53a55ac9863a5547e292b8e381d4e4c2240dd1127d5428a7c44dbc550be23963` |
 
 The source is an independent snapshot of the official OpenWrt tree with the
 listed customizations. Upstream history is available at the recorded base
@@ -163,6 +163,45 @@ were skipped because their native Ninja/signing tools were unavailable. The
 packaged kit passed a standalone CLI upgrade from reconstructed 6.18.55 files,
 verified download-cache reuse and a second no-op check. Detailed results and
 the kit checksum are in `docs/validation/kernel-6.18.58-preflight.json`.
+
+## Linux 6.18.59 update and migration kit, 2026-10-28
+
+The manifest and generic kernel metadata now select Linux 6.18.59. The official
+154,844,772-byte archive matched kernel.org's published SHA256 over HTTPS.
+The cgroup CLONE_INTO_CGROUP fix is now part of the stable kernel, so its
+duplicate OpenWrt backport is removed. The previous bridge, FQ-CoDel, LoongArch
+and wireless socket compatibility adjustments are retained.
+
+OpenWrt's separate backports 7.2 wireless source still needed the upstream p54
+firmware validation fix for CVE-2026-99100. The new wireless patch makes its
+parser identical to Linux 6.18.59 and increases the package release to 7.
+See [the dated CVE report](KERNEL-6.18.59-SECURITY.md) for the seven assigned
+security fixes mapped to this release and their relevance to these profiles.
+
+Local preflight applied all 591 MediaTek and 497 Ralink kernel patches and all
+192 mac80211 patches with zero fuzz and no rejects. The actual socket wrapper
+compiled to an AArch64 Linux object against the native 6.18.59 type after
+reproducing the original duplicate-definition error. This probe uses minimal
+include stubs; it does not compile a complete wireless module.
+
+`updates/kernel-6.18.59/` contains a standalone Python updater, hash-checked
+replacement files and a unified patch from the original 6.18.55 snapshot. It
+also accepts the compatible 6.18.56/57/58 states. Unknown local edits abort the
+update before source writes. Backups, device selection, toolchains and download
+caches are retained. Follow the included README to rebuild kernel outputs and
+modules together.
+
+Source checks passed for all six published device profiles. The regression
+suite passed 67 tests, including 14 migration/bundle checks; seven native
+Ninja/signing integration checks were skipped because their tools were absent.
+The packaged delivery was also exercised through its standalone CLI against
+reconstructed 6.18.55 files, including verified download-cache reuse and a
+repeat no-op run. Detailed results are in
+`docs/validation/kernel-6.18.59-preflight.json`.
+
+Full firmware compilation and hardware boot remain unverified on this macOS
+host. This update uses `[skip ci]`, preserving the request to stop cloud builds.
+The separate unpublished PON integration draft is outside these results.
 
 ## Local macOS checks on 2026-10-15
 
