@@ -8,7 +8,7 @@ Also check fclose(): a buffered write can fail only when flushed on close.
 
 --- a/ucert.c
 +++ b/ucert.c
-@@ -119,8 +119,7 @@ static bool write_file(const char *filen
+@@ -126,8 +126,7 @@
  		return false;
  
  	outlen = fwrite(buf, 1, len, f);
@@ -16,10 +16,10 @@ Also check fclose(): a buffered write can fail only when flushed on close.
 -	return (outlen == len);
 +	return fclose(f) == 0 && outlen == len;
  }
+ 
  /* reads a whole file to a buffer - returns -1 on errors and sets errno */
- static ssize_t read_file(const char *filename, void *buf, size_t len, size_t minlen) {
-@@ -214,7 +214,7 @@ static int cert_append(const char *certf
- 	}
+@@ -228,7 +227,7 @@
+ 
  	blob_buf_init(&sigbuf, 0);
  	blob_put(&sigbuf, CERT_ATTR_SIGNATURE, filebuf, len);
 -	ret = write_file(certfile, sigbuf.head, blob_raw_len(sigbuf.head), true);

@@ -1,8 +1,8 @@
 {
   "name": "op-source",
   "repository": "tdsafgen1888asd/op-source",
-  "kernel": "6.18.59",
-  "kernel_sha256": "53a55ac9863a5547e292b8e381d4e4c2240dd1127d5428a7c44dbc550be23963",
+  "kernel": "6.18.60",
+  "kernel_sha256": "3c2f44ef6acc021a7ad444d9a2e6ec1ef488ff09368793d0004a6080f69d621e",
   "source": {
     "url": "https://github.com/openwrt/openwrt",
     "branch": "main",
