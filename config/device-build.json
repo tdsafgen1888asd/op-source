@@ -61,6 +61,24 @@
       "profile": "cudy_tr1200-v1",
       "dts": "mt7628an_cudy_tr1200-v1",
       "compatible": "cudy,tr1200-v1"
+    },
+    "xg-040g-md-tcboot": {
+      "name": "Nokia XG-040G-MD (tcboot)",
+      "target": "airoha",
+      "subtarget": "an7581",
+      "profile": "nokia_xg-040g-md-tcboot",
+      "dts": "an7581-nokia_xg-040g-md-tcboot",
+      "compatible": "nokia,xg-040g-md-tcboot",
+      "factory_image": true
+    },
+    "xg-140g-tf-tcboot": {
+      "name": "Nokia XG-140G-TF (tcboot)",
+      "target": "airoha",
+      "subtarget": "an7581",
+      "profile": "nokia_xg-140g-tf-tcboot",
+      "dts": "an7581-nokia_xg-140g-tf-tcboot",
+      "compatible": "nokia,xg-140g-tf-tcboot",
+      "factory_image": true
     }
   },
   "visibility": "public",

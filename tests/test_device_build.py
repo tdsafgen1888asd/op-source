@@ -2,6 +2,8 @@ import hashlib
 import importlib.util
 import json
 from pathlib import Path
+import subprocess
+import tarfile
 import tempfile
 import unittest
 
@@ -20,7 +22,8 @@ class SelectionTests(unittest.TestCase):
                           ('tr1200', 'ramips', 'mt76x8')])
 
     def test_optional_layouts_are_explicit_single_device_choices(self):
-        for name in ['ax3000t-ubootmod', 'tr3000-256mb', 'tr3000-ubootmod']:
+        for name in ['ax3000t-ubootmod', 'tr3000-256mb', 'tr3000-ubootmod',
+                     'xg-040g-md-tcboot', 'xg-140g-tf-tcboot']:
             with self.subTest(name=name):
                 self.assertEqual([e['device'] for e in builder.matrix(name)['include']], [name])
 
@@ -102,6 +105,72 @@ class ImageTests(unittest.TestCase):
         self.info['profiles']['other-device'] = self.info['profiles']['cudy_tr1200-v1']
         self.write_info()
         with self.assertRaises(ValueError): builder.check_images('tr1200', self.output)
+
+    def test_tcboot_requires_factory_and_sysupgrade(self):
+        entry = builder.device('xg-040g-md-tcboot')
+        self.info['target'] = 'airoha/an7581'
+        self.info['profiles'][entry['profile']] = self.info['profiles'].pop('cudy_tr1200-v1')
+        images = self.info['profiles'][entry['profile']]['images']
+        self.write_info()
+        with self.assertRaisesRegex(ValueError, 'No factory image'):
+            builder.check_images('xg-040g-md-tcboot', self.output)
+        factory = self.output / 'factory.bin'
+        factory.write_bytes(b'factory image')
+        images.append({'type': 'factory', 'name': factory.name, 'size': factory.stat().st_size,
+                       'sha256': hashlib.sha256(factory.read_bytes()).hexdigest()})
+        self.write_info()
+        builder.check_images('xg-040g-md-tcboot', self.output)
+
+
+class TcbootUpgradeTests(unittest.TestCase):
+    def test_only_matching_archive_and_existing_ubi_can_reach_flash(self):
+        base = ROOT / 'package/base-files/files/lib/upgrade'
+        platform = ROOT / 'target/linux/airoha/an7581/base-files/lib/upgrade/platform.sh'
+        check = r'''
+            . "$1/common.sh"
+            eval "$(sed '/^\. \/lib\/functions\.sh$/d' "$1/nand.sh")"
+            . "$2"
+            test_board="$3"
+            layout="$5"
+            board_name() { echo "$test_board"; }
+            nand_find_ubi() { [ "$layout" = attached ] && echo ubi0; }
+            nand_find_volume() { echo "ubi0_$2"; }
+            nand_do_upgrade() { [ "$CI_SKIP_KERNEL_MTD" = 1 ] && echo "ready to write"; }
+            "$6" "$4"
+        '''
+        for name in ['xg-040g-md-tcboot', 'xg-140g-tf-tcboot']:
+            entry = builder.device(name)
+            with self.subTest(device=name), tempfile.TemporaryDirectory() as temporary:
+                files = Path(temporary)
+                directory = files / ('sysupgrade-' + entry['profile'])
+                directory.mkdir()
+                (directory / 'CONTROL').write_text('BOARD=' + entry['profile'] + '\n')
+                (directory / 'kernel').write_bytes(bytes.fromhex('d00dfeed'))
+                (directory / 'root').write_bytes(b'hsqs')
+                archive = files / 'sysupgrade.bin'
+                with tarfile.open(archive, 'w') as tar:
+                    tar.add(directory, arcname=directory.name)
+                broken = files / 'kernel-only.bin'
+                with tarfile.open(broken, 'w') as tar:
+                    tar.add(directory, arcname=directory.name, recursive=False)
+                    for member in ['CONTROL', 'kernel']:
+                        tar.add(directory / member, arcname=directory.name + '/' + member)
+
+                def run(board, image, layout='attached', action='platform_do_upgrade'):
+                    return subprocess.run(['bash', '-c', check, 'tcboot', str(base), str(platform),
+                                           board, str(image), layout, action],
+                                          capture_output=True, text=True)
+
+                board = entry['compatible']
+                result = run(board, archive, action='platform_check_image')
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertIn('ready to write', run(board, archive).stdout)
+                other_board = ('nokia,xg-140g-tf-tcboot' if '040g' in board
+                               else 'nokia,xg-040g-md-tcboot')
+                for result in [run(board, archive, 'absent'), run(board, broken),
+                               run(board, directory / 'kernel'), run(other_board, archive)]:
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertNotIn('ready to write', result.stdout)
 
 
 if __name__ == '__main__':

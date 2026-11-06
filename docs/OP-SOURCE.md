@@ -40,8 +40,39 @@ records the current kernel updates, selected package fixes and local checks.
 - Replace the reference's ImmortalWrt feeds with pinned official OpenWrt feeds.
   Firmware distribution and manufacturer defaults remain OpenWrt.
 
-The inherited PON/Airoha-specific integration is outside the three-device port;
-other devices use their definitions from the recorded official OpenWrt base.
+The original three-device port used the official OpenWrt definitions for the
+other targets.
+
+## Nokia tcboot builds
+
+Select `xg-040g-md-tcboot` or `xg-140g-tf-tcboot` in **OpenWrt Device Build**.
+For a local build on a supported Linux host, install the pinned feeds first.
+Pass the same device name to the configurator before building.
+
+```sh
+cp feeds.conf.release feeds.conf
+./scripts/feeds update -a
+./scripts/feeds install -a
+python3 scripts/device-build.py configure xg-040g-md-tcboot
+make -j"$(nproc)"
+```
+
+Firmware appears under `bin/targets/airoha/an7581/`. The `factory.bin` is
+for the matching device's installed N-WRT tcboot Web recovery. Back up the
+original NAND and retain the device's `ri` and `bosa` data before using Web
+recovery. The factory image contains an 8 MiB FIT area followed by UBI with
+`kernel`, `rootfs` and `rootfs_data` volumes. Use the signed
+`sysupgrade.bin` for updates from the same tcboot profile. Sysupgrade
+replaces those three firmware volumes and leaves any existing `ri` and
+`bosa` volumes in place.
+
+The MD retains both USB controllers and defaults to four LAN ports. The
+TF uses its 2.5 GbE port (`lan1`) as WAN and the other three as LAN. These
+profiles cover the firmware layout and Ethernet. Optical PON support needs
+the separate PON integration.
+
+The factory layout follows the [XG-040G-MD tcboot image recipe](https://github.com/xiangtailiang/openwrt/blob/main/target/linux/airoha/image/an7581.mk)
+and the [XG-140G-TF hardware report](https://jishuzhan.net/article/2047862673983995906).
 
 ## Linux 6.18.55 to 6.18.56
 

@@ -168,6 +168,35 @@ define Device/nokia_xg-040g-md
 endef
 TARGET_DEVICES += nokia_xg-040g-md
 
+define Device/nokia_xg-040g-tcboot-common
+  $(call Device/nokia_xg-040g-md-common)
+  DEVICE_VARIANT := (tcboot)
+  KERNEL_LOADADDR := 0x80088000
+  KERNEL_SIZE := 8192k
+  IMAGE_SIZE := 261120k
+  KERNEL_IN_UBI := 1
+  SUBPAGESIZE := 2048
+  DEVICE_PACKAGES += ubi-utils
+  IMAGES := factory.bin sysupgrade.bin
+  # tcboot Web recovery expects an 8 MiB FIT area before the UBI image.
+  IMAGE/factory.bin := append-kernel | pad-to $$$$(KERNEL_SIZE) | append-ubi | check-size
+  IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata | check-size
+endef
+
+define Device/nokia_xg-040g-md-tcboot
+  $(call Device/nokia_xg-040g-tcboot-common)
+  DEVICE_DTS := an7581-nokia_xg-040g-md-tcboot
+endef
+TARGET_DEVICES += nokia_xg-040g-md-tcboot
+
+define Device/nokia_xg-140g-tf-tcboot
+  $(call Device/nokia_xg-040g-tcboot-common)
+  DEVICE_MODEL := XG-140G-TF
+  DEVICE_DTS := an7581-nokia_xg-140g-tf-tcboot
+  DEVICE_PACKAGES := $$(filter-out kmod-regulator-userspace-consumer kmod-usb-ledtrig-usbport kmod-usb3,$$(DEVICE_PACKAGES))
+endef
+TARGET_DEVICES += nokia_xg-140g-tf-tcboot
+
 define Device/nokia_xg-040g-md-ubi
   $(call Device/nokia_xg-040g-md-common)
   DEVICE_VARIANT := (UBI)

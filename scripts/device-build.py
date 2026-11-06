@@ -39,12 +39,16 @@ def check_config(name, path):
         'CONFIG_DOWNLOAD_CHECK_CERTIFICATE=y',
         'CONFIG_USE_APK=y',
     ]
-    required += (['CONFIG_PACKAGE_kmod-mt7915e=y', 'CONFIG_PACKAGE_kmod-mt7981-firmware=y',
-                  'CONFIG_PACKAGE_mt7981-wo-firmware=y', 'CONFIG_PACKAGE_luci-ssl-openssl=y']
-                 if entry['target'] == 'mediatek' else
-                 ['CONFIG_PACKAGE_kmod-mt7603=y', 'CONFIG_PACKAGE_kmod-mt7615e=y',
-                  'CONFIG_PACKAGE_kmod-mt7663-firmware-ap=y', 'CONFIG_PACKAGE_kmod-usb2=y',
-                  'CONFIG_PACKAGE_luci-ssl=y'])
+    if entry['target'] == 'mediatek':
+        required += ['CONFIG_PACKAGE_kmod-mt7915e=y', 'CONFIG_PACKAGE_kmod-mt7981-firmware=y',
+                     'CONFIG_PACKAGE_mt7981-wo-firmware=y', 'CONFIG_PACKAGE_luci-ssl-openssl=y']
+    elif entry['target'] == 'airoha':
+        required += ['CONFIG_PACKAGE_kmod-phy-airoha-en8811h=y', 'CONFIG_PACKAGE_ubi-utils=y',
+                     'CONFIG_PACKAGE_luci-ssl-openssl=y']
+    else:
+        required += ['CONFIG_PACKAGE_kmod-mt7603=y', 'CONFIG_PACKAGE_kmod-mt7615e=y',
+                     'CONFIG_PACKAGE_kmod-mt7663-firmware-ap=y', 'CONFIG_PACKAGE_kmod-usb2=y',
+                     'CONFIG_PACKAGE_luci-ssl=y']
     missing = [setting for setting in required if setting not in settings]
     if missing:
         raise ValueError('Resolved configuration is missing: ' + ', '.join(missing))
@@ -107,6 +111,8 @@ def check_images(name, directory):
     images = profiles[entry['profile']].get('images', [])
     if not any(image.get('type') == 'sysupgrade' for image in images):
         raise ValueError('No sysupgrade image was produced; check image size in the build log')
+    if entry.get('factory_image') and not any(image.get('type') == 'factory' for image in images):
+        raise ValueError('No factory image was produced; check image size in the build log')
     for image in images:
         if Path(image['name']).name != image['name']:
             raise ValueError('Invalid image filename in profiles.json')

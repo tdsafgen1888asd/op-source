@@ -40,7 +40,16 @@ on:
         description: Device or default three-device set
         type: choice
         default: all
-        options: [all, ax3000t, tr3000, tr1200, ax3000t-ubootmod, tr3000-256mb, tr3000-ubootmod]
+        options:
+          - all
+          - ax3000t
+          - tr3000
+          - tr1200
+          - ax3000t-ubootmod
+          - tr3000-256mb
+          - tr3000-ubootmod
+          - xg-040g-md-tcboot
+          - xg-140g-tf-tcboot
 
 permissions:
   contents: read
