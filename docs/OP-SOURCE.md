@@ -10,15 +10,17 @@
 | Customization reference | `tdsafgen1888asd/Device-Build`, branch `main` |
 | Reference commit | `db96277fbc98282751cb1d70b83bc1cd8156eb4d` |
 | Import date | 2026-10-13, Asia/Shanghai |
-| Kernel | Linux 6.18.60 |
-| Kernel archive SHA256 | `3c2f44ef6acc021a7ad444d9a2e6ec1ef488ff09368793d0004a6080f69d621e` |
+| Kernel | Linux 6.18.62 |
+| Kernel archive SHA256 | `490a7aedf1b355c565d3a6c05333ccccb5da82064eca46b590448a7099d7d651` |
 
 The source is an independent snapshot of the official OpenWrt tree with the
 listed customizations. Upstream history is available at the recorded base
 commit. All source copyright notices and licenses are retained.
 
 The [2026-11-06 upstream security audit](UPSTREAM-SECURITY-2026-11-06.md)
-records the current kernel updates, selected package fixes and local checks.
+records the earlier kernel updates and selected package fixes. The
+[Linux 6.18.62 migration kit](../updates/kernel-6.18.62/) covers the current
+kernel and an existing OpenWrt 6.18.55 build directory.
 
 ## Device-Build customizations
 

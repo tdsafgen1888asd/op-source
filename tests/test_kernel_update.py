@@ -184,11 +184,18 @@ class UpdateTests(unittest.TestCase):
 
     def test_bundle_payloads_match_current_source(self):
         current = json.loads((ROOT / 'config/device-build.json').read_text())
-        if current['kernel'] != self.manifest['kernel']:
-            self.skipTest('Historical migration bundle targets a different kernel')
-        for entry in self.manifest['files']:
+        bundle = ROOT / ('updates/kernel-' + current['kernel'])
+        if not bundle.is_dir():
+            self.skipTest('No migration bundle for the current kernel')
+        spec = importlib.util.spec_from_file_location('current_kernel_update', bundle / 'update.py')
+        current_updater = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(current_updater)
+        manifest = current_updater.load_bundle(bundle)
+        self.assertEqual(manifest['kernel_sha256'], current['kernel_sha256'])
+        for entry in manifest['files']:
             path = ROOT / entry['path']
-            self.assertEqual(updater.digest(path.read_bytes()) if path.exists() else None, entry['after'])
+            self.assertEqual(current_updater.digest(path.read_bytes()) if path.exists() else None,
+                             entry['after'], entry['path'])
 
 
 if __name__ == '__main__':
